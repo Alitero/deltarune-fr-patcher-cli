@@ -114,13 +114,17 @@ fn apply_bps(
 }
 
 fn select_platform(game_dir: &Path) -> String {
-    let steam_api_path = game_dir.join("steam_api.dll"); // Chemin attendu : /chemin/vers/Deltarune/steamapi.dll
-    if steam_api_path.exists() && steam_api_path.is_file() {
-        println!("Fichier steam_api.dll trouvé. Téléchargement du patch Steam.");
-        "steam".to_string()
+    let chapter3_data = game_dir.join("chapter3_windows/data.win");
+    let chapter2_data = game_dir.join("chapter2_windows/data.win");
+    if chapter3_data .exists() && chapter3_data.is_file() {
+        println!("Jeu complet détecté. Téléchargement du patch.");
+        "full".to_string()
+    } else if chapter2_data .exists() && chapter2_data.is_file() {
+        println!("Demo détectée ! Téléchargement du patch demo.");
+        "demo".to_string()
     } else {
-        println!("Fichier steam_api.dll non trouvé. Téléchargement du patch Itch (par défaut).");
-        "itch".to_string()
+        println!("Le dossier du chapitre 2 n'a pas été détecté !");
+        "none".to_string()
     }
 }
 
@@ -232,6 +236,9 @@ fn run_install_process(game_dir: &Path) -> Result<(), Box<dyn Error>> {
     let patch_index = fetch_patch_index(index_url)?;
 
     let platform_key = select_platform(game_dir);
+    if platform_key == "none" {
+        return Err("Le dossier sélectionné semble invalide. Vérifiez que vous avez choisi le bon dossier. Si vous utilisez la version démo de DELTARUNE, vérifiez que vous avez bien activé la beta chapter1.2.lts.test sur Steam.".into());
+    }
 
     let platform_info = patch_index.get(&platform_key).ok_or_else(|| {
         format!("Plateforme '{}' non trouvée dans l'index JSON.", platform_key)
